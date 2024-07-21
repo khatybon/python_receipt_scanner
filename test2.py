@@ -6,10 +6,10 @@ import pandas as pd
 import csv
 import nltk
 import re
-from nltk.tokenize import word_tokenize
-from nltk.corpus import wordnet
 from datetime import datetime
+import matplotlib.pyplot as plt
 
+# Ensure NLTK data is downloaded
 nltk.download('punkt', quiet=True)
 nltk.download('wordnet', quiet=True)
 nltk.download('stopwords', quiet=True)
@@ -48,6 +48,9 @@ def process_image(image_path):
     price = list(map(float, price))
     max_price = max(price) if price else 0
 
+    match = re.findall(r'\d+[/]\d+[/]\d+', text)
+    date_str = " ".join(match)
+
     lines = text.split('\n')
     line_items = []
     total_amount = extract_total_amount(text)
@@ -60,33 +63,32 @@ def process_image(image_path):
         if item_match:
             item_name = item_match.group(1).strip()
             item_price = float(item_match.group(2)[1:])  
-            line_items.append((item_name, item_price, None, None))
+            line_items.append((date_str, head, item_name, item_price, None, None))
 
     # Add total and tax only once
     if total_amount is not None:
-        line_items.append(('total', total_amount, total_amount, tax_amount))
+        line_items.append((date_str, head, 'total', 0.0, total_amount, tax_amount))
     if tax_amount is not None:
-        line_items.append(('sales tax', tax_amount, None, tax_amount))
+        line_items.append((date_str, head, 'sales tax', 0.0, None, tax_amount))
 
     return line_items
 
 def write_rows_to_csv(file, rows):
     with open(file, 'w', newline='') as write_obj:
         csv_writer = csv.writer(write_obj)
-        csv_writer.writerow(['Item', 'Amount', 'Total', 'Tax'])
+        csv_writer.writerow(['date', 'head', 'Item', 'Amount', 'Total', 'Tax'])
         csv_writer.writerows(rows)
 
+
 # Directory and file handling
-image_dir = 'images'  # Nom du dossier contenant les images
 output_filename = generate_filename()
 all_line_items = []
 
-# Process images named from 1000 to 1200
-for i in range(1000, 1200):
-    image_path = os.path.join(image_dir, f"{i}-receipt.jpg")
-    if os.path.isfile(image_path):
-        line_items = process_image(image_path)
-        all_line_items.extend(line_items)
+# Process a single image
+image_path = 'images/1007-receipt.jpg'  # Path to the specific image
+if os.path.isfile(image_path):
+    line_items = process_image(image_path)
+    all_line_items.extend(line_items)
 
 # Write all collected data to the CSV file
 write_rows_to_csv(output_filename, all_line_items)
@@ -97,7 +99,16 @@ def load_and_process_csv(filename):
         df = pd.read_csv(filename, encoding='latin1')  # Specify the encoding here
         return df
     else:
-        return pd.DataFrame(columns=['Item', 'Amount', 'Total', 'Tax'])
+        return pd.DataFrame(columns=['date', 'head', 'Item', 'Amount', 'Total', 'Tax'])
 
 dataframe = load_and_process_csv(output_filename)
 print(dataframe.head())
+
+filtered_df = dataframe[~dataframe['Item'].isin(['total', 'sales tax'])]
+plt.figure(figsize=(24, 5))
+plt.bar(filtered_df['head'], filtered_df['Amount'])
+plt.xlabel('Head')
+plt.ylabel('Amount')
+plt.title('Amount by Head')
+filtered_df.plot(x='head', y='Amount', kind='barh', title='margin')
+plt.show()

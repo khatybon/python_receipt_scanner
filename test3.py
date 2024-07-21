@@ -85,12 +85,12 @@ image_dir = 'images'  # Nom du dossier contenant les images
 output_filename = generate_filename()
 all_line_items = []
 
-# Process images named from 1000 to 1200
-for i in range(1000, 1200):
-    image_path = os.path.join(image_dir, f"{i}-receipt.jpg")
-    if os.path.isfile(image_path):
-        line_items = process_image(image_path)
-        all_line_items.extend(line_items)
+# # Process images named from 1000 to 1200
+# for i in range(1000, 1200):
+#     image_path = os.path.join(image_dir, f"{i}-receipt.jpg")
+#     if os.path.isfile(image_path):
+#         line_items = process_image(image_path)
+#         all_line_items.extend(line_items)
 
 # Write all collected data to the CSV file
 write_rows_to_csv(output_filename, all_line_items)
