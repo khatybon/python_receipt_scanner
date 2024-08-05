@@ -36,7 +36,7 @@ def process_image(image_path):
             continue
         parts = line.split()
         if len(parts) >= 3:
-            item_name = ' '.join(parts[:-2])  # Join all parts except the last two
+            item_name = ' '.join(parts[:-2])  
             try:
                 quantity = int(parts[-2])
                 price = float(parts[-1].replace('$', ''))
@@ -45,7 +45,6 @@ def process_image(image_path):
             except ValueError:
                 continue
 
-    # Add the total price as the last row
     line_items.append(('Total', '', total_price))
 
     return line_items
